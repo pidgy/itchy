@@ -168,9 +168,9 @@ void scene_login_input(itchy_ctx_t *itchy_ctx)
 
 void scene_twitch_render_top(itchy_ctx_t *itchy_ctx)
 {
-    if (itchy_ctx->thread_irc == NULL)
+    if (itchy_ctx->irc->thread_irc == NULL)
     {
-        if (R_FAILED(itchy_ctx_thread_start(itchy_ctx)))
+        if (R_FAILED(irc_ctx_thread_start(itchy_ctx->irc)))
         {
             irc_ctx_log_error(itchy_ctx->irc, "Failed to start IRC thread");
             return;
@@ -238,7 +238,7 @@ void scene_twitch_input(itchy_ctx_t *itchy_ctx)
 
 void scene_twitch_close_render_top(itchy_ctx_t *itchy_ctx)
 {
-    itchy_ctx_thread_stop(itchy_ctx);
+    irc_ctx_thread_stop(itchy_ctx->irc);
 
     scene_state_set(SCENE_LOGIN);
 }
@@ -329,7 +329,7 @@ static void scene_debug_console_render_bottom_text(itchy_ctx_t* itchy_ctx, C2D_T
     va_end(args);
 
     C2D_TextParseLine(text, text_buf_dynamic, buf, line_no);
-    C2D_TextParseLine(text, text_buf_dynamic, "\0", line_no+1);
+    // C2D_TextParseLine(text, text_buf_dynamic, "\0", line_no+1);
     C2D_TextOptimize(text);
 }
 
@@ -374,11 +374,11 @@ void scene_debug_console_render_bottom(itchy_ctx_t* itchy_ctx)
 
         int i = 0;
         scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i, "itchy Debug Menu");
-        i++;
-        scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i, "");
-        i++;
-        scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i, "");
-        i++;
+        // i++;
+        // scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i, "");
+        // i++;
+        // scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i, "");
+        // i++;
 
         // scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i++, "Scene: %s", scene_state_str());
         // scene_debug_console_render_bottom_text(itchy_ctx, &text_debug, i++, "Kb: %d", itchy_ctx->irc->kbr);

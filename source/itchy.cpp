@@ -1,8 +1,5 @@
 #include "itchy.hpp"
 
-#define THREAD_TOTAL 1
-#define THREAD_STACKSIZE (4 * 1024)
-
 time_t itchy_start = time(0);
 
 itchy_ctx_t *itchy_ctx_new()
@@ -18,33 +15,13 @@ void itchy_ctx_free(itchy_ctx_t *ctx)
     ctx->keys = 0;
     ctx->debug_mode = false;
     
-    itchy_ctx_thread_stop(ctx);
+    irc_ctx_thread_stop(ctx->irc);
 
     irc_ctx_free(ctx->irc);
 
     free(ctx);
 
     ctx = NULL;
-}
-
-int itchy_ctx_thread_start(itchy_ctx_t *ctx)
-{
-    s32 thread_priority = 0;
-    svcGetThreadPriority(&thread_priority, CUR_THREAD_HANDLE);
-    ctx->thread_irc = threadCreate(irc_thread, ctx->irc, THREAD_STACKSIZE, thread_priority - 1, -2, true);
-    if (ctx->thread_irc == NULL)
-    {
-        return -1;
-    }
-    return 0;
-}
-
-void itchy_ctx_thread_stop(itchy_ctx_t *ctx)
-{
-    ctx->irc->is_running = false;
-    threadJoin(ctx->thread_irc, U64_MAX);
-    threadFree(ctx->thread_irc);
-    ctx->thread_irc = NULL;
 }
 
 void itchy_ctx_scan_input(itchy_ctx_t *ctx)

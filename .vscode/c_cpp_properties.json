@@ -3,7 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**.hpp",
+                "C:/devkitPro/libctru/include/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -12,10 +13,10 @@
                 "_POSIX_THREADS"
             ],
             "windowsSdkVersion": "10.0.22621.0",
-            "compilerPath": "C:/mingw64/bin/gcc.execl.exe",
-            "cStandard": "c17",
+            "compilerPath": "C:/devkitPro/devkitARM/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-arm"
+            "intelliSenseMode": "gcc-arm"
         }
     ],
     "version": 4

@@ -1,8 +1,46 @@
 #include "irc.hpp"
 
-void socket_shutdown()
+#include <sys/select.h> 
+
+#define SOCKET_RCVTIMEO 0x1006 // Sockets receive timeout.
+
+#define THREAD_TOTAL 1
+#define THREAD_STACKSIZE (4 * 1024)
+
+static void socket_shutdown()
 {
     socExit();
+}
+
+typedef enum 
+{
+    C2D_COLOR_RED,
+    C2D_COLOR_GREEN,
+    C2D_COLOR_BLUE,
+    C2D_COLOR_YELLOW,
+    C2D_COLOR_PURPLE,
+    C2D_COLOR_ORANGE,
+    C2D_COLOR_WHITE,
+    C2D_COLOR_CYAN,
+    C2D_COLOR_MAGENTA,
+    C2D_COLOR_COUNT 
+} c2d_color_id;
+
+static const u32 c2d_color_table[C2D_COLOR_COUNT] = {
+    C2D_Color32(255, 0,   0,   255), // Red
+    C2D_Color32(0,   255, 0,   255), // Green
+    C2D_Color32(0,   0,   255, 255), // Blue
+    C2D_Color32(255, 255, 0,   255), // Yellow
+    C2D_Color32(128, 0,   128, 255), // Purple
+    C2D_Color32(255, 165, 0,   255), // Orange
+    C2D_Color32(255, 255, 255, 255), // White
+    C2D_Color32(0,   255, 255, 255), // Cyan
+    C2D_Color32(255, 0,   255, 255)  // Magenta
+};
+
+static u32 c2d_color_rand(void) {
+    int index = rand() % C2D_COLOR_COUNT;
+    return c2d_color_table[index];
 }
 
 irc_ctx_t *irc_ctx_new()
@@ -211,8 +249,8 @@ int irc_ctx_enter_credentials(irc_ctx_t *ctx)
 
 	if (ikb_ctx_enter_text(ctx, ctx->channel, IRC_KB_INPUT_MAX, "Twitch Chat Channel") != 0)
 	{
-	        irc_ctx_log_error(ctx, "Error: Invalid Twitch channel");
-	return -1;
+	    irc_ctx_log_error(ctx, "Error: Invalid Twitch channel");
+	    return -1;
 	}
 	
 	return 0;
@@ -293,7 +331,7 @@ int irc_ctx_file_delete_credentials(irc_ctx_t *ctx, const char* path)
     return remove(path);
 }
 
-void irc_wait_for_socket(irc_ctx_t *ctx)
+static void irc_wait_for_socket(irc_ctx_t *ctx)
 {
     fd_set fdset;
     FD_ZERO(&fdset);
@@ -333,40 +371,7 @@ void irc_wait_for_socket(irc_ctx_t *ctx)
     }
 }
 
-typedef enum 
-{
-    C2D_COLOR_RED,
-    C2D_COLOR_GREEN,
-    C2D_COLOR_BLUE,
-    C2D_COLOR_YELLOW,
-    C2D_COLOR_PURPLE,
-    C2D_COLOR_ORANGE,
-    C2D_COLOR_WHITE,
-    C2D_COLOR_CYAN,
-    C2D_COLOR_MAGENTA,
-    C2D_COLOR_COUNT 
-} c2d_color_id;
-
-static const u32 c2d_color_table[C2D_COLOR_COUNT] = {
-    C2D_Color32(255, 0,   0,   255), // Red
-    C2D_Color32(0,   255, 0,   255), // Green
-    C2D_Color32(0,   0,   255, 255), // Blue
-    C2D_Color32(255, 255, 0,   255), // Yellow
-    C2D_Color32(128, 0,   128, 255), // Purple
-    C2D_Color32(255, 165, 0,   255), // Orange
-    C2D_Color32(255, 255, 255, 255), // White
-    C2D_Color32(0,   255, 255, 255), // Cyan
-    C2D_Color32(255, 0,   255, 255)  // Magenta
-};
-
-u32 c2d_color_rand(void) {
-    int index = rand() % C2D_COLOR_COUNT;
-    return c2d_color_table[index];
-}
-
-#define SO_RCVTIMEO     0x1006      // receive timeout
-
-void irc_thread(void *arg)
+static void irc_thread(void *arg)
 {
 	irc_ctx_t *ctx = (irc_ctx_t *)(arg);
 
@@ -389,7 +394,7 @@ void irc_thread(void *arg)
     struct timeval timeout;
     timeout.tv_sec = 5; // 5 second timeout
     timeout.tv_usec = 0;
-    if (R_FAILED(setsockopt(ctx->socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)))) 
+    if (R_FAILED(setsockopt(ctx->socket, SOL_SOCKET, SOCKET_RCVTIMEO, &timeout, sizeof(timeout)))) 
     {
         irc_ctx_log_error(ctx, "Failed to set socket options: %s", strerror(errno));
         return;        
@@ -509,4 +514,24 @@ void irc_thread(void *arg)
             irc_ctx_log_info(ctx, "IRC command: %s", ctx->buffer);
         }
     }
+}
+
+int irc_ctx_thread_start(irc_ctx_t *ctx)
+{
+    s32 thread_priority = 0;
+    svcGetThreadPriority(&thread_priority, CUR_THREAD_HANDLE);
+    ctx->thread_irc = threadCreate(irc_thread, ctx, THREAD_STACKSIZE, thread_priority - 1, -2, true);
+    if (ctx->thread_irc == NULL)
+    {
+        return -1;
+    }
+    return 0;
+}
+
+void irc_ctx_thread_stop(irc_ctx_t *ctx)
+{
+    ctx->is_running = false;
+    threadJoin(ctx->thread_irc, U64_MAX);
+    threadFree(ctx->thread_irc);
+    ctx->thread_irc = NULL;
 }

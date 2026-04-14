@@ -1,3 +1,10 @@
+itchy.cache
+build/*
+itchy.3dsx
+itchy.elf
+itchy.smdh
+gfx/itchy.t3s
+
 # Prerequisites
 *.d
 

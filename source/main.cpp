@@ -1,3 +1,5 @@
+#include "common.hpp"
+#include "itchy.hpp"
 #include "scene.hpp"
 
 #define SCREEN_HEIGHT 240
@@ -27,6 +29,8 @@ int main()
             // {
             //     itchy_ctx->debug_mode = !itchy_ctx->debug_mode;
             // }
+            scene_debug_console_input(itchy_ctx);
+            
             if (itchy_ctx->irc->has_error && scene_state != SCENE_LOGIN_CLOSE)
             {
                 scene_toast_error_input(itchy_ctx);
@@ -48,8 +52,6 @@ int main()
                 case SCENE_NONE:
                     return -1;
             }
-        
-            scene_debug_console_input(itchy_ctx);
         }
 
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
