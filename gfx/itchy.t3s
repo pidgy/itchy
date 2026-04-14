@@ -1,0 +1,5 @@
+--atlas -f RGBA -z auto
+itchy_login.png
+itchy_twitch.png
+itchy_toast_error.png
+itchy_toast_info.png
