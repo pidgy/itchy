@@ -1,4 +1,3 @@
-:: How to run:
 :: C:\devkitPro\msys2\msys2.exe deploy.bat
 
 clear && make clean && make 
